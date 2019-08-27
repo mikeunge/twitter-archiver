@@ -1,19 +1,23 @@
 #!/bin/python3 *
 # -*- coding: utf-8 -*-
-import os
-import sys
-import platform
-import tweepy
-import sqlite3
-import logging
-import configparser as configparser
+import os, sys, platform, logging
+import tweepy, sqlite3, configparser
 
 # create global vars..
-logger, logging_enabled, logging_path, configpath, os_system, print_data = "", "", "", "", "", True
+logger, logging_enabled, logging_path, configpath, os_system = "", "", "", "", ""
 
 # define the version and build
-VERSION = "0.4"
-BUILD = "0.4.9"
+VERSION = "0.5"
+BUILD = "0.5.2"
+BUILD_STATE = "nightly"
+
+# check for the BUILD_STATE and then change the BUILD_ICON
+if (BUILD_STATE == "nightly"):
+    BUILD_ICON = '🌑'
+elif (BUILD_STATE == "stable"):
+    BUILD_ICON = '🌱'
+else:
+    BUILD_ICON = '🔥'
 
 class Database:
     def create(file, path):
@@ -52,6 +56,8 @@ class Database:
         conn = sqlite3.connect(self)
         cur = conn.cursor()
         App.writeLog("DEBUG", "Database connection established..")
+        
+        # replie filter goes here, before the verification..
         if (verify == True):
             if (Database.verifyData(self, data) == True):
                 # execute the sql statement..
@@ -71,6 +77,7 @@ class Database:
         return val
 
 
+    # add a new parameter (replie), so the query can switch and filter both tables ;)
     def verifyData(self, data):
         # function for verifying the tweet, checking if the tweet already exists..
         # accepts self => database_path, data => data to be verified
@@ -94,6 +101,17 @@ class Database:
                     return False
 
 
+    # under construction!
+    # will implement later, but I need to change the whole sql part before that..
+    def filterReplies(self):
+        # get rid of those nasty replies
+        # thanks to pythons built-in functions ^^
+        if (self.startswith('@')):
+            return True
+        else:
+            return False
+
+
 class Twitter:
     # authenticatethe bot
     def authenticate(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_SECRET):
@@ -108,8 +126,10 @@ class Twitter:
             # return the api so it can be used somewhere else
             return api
         except Exception as ex:
-            
-            pass
+            # if the API tokens aren't correct, this error occurs
+            App.printOut("\nerror message:\n❌  couldn't connect to the twitter API..")
+            App.writeLog("CRITICAL", "Could not connect to the twitter API, please check your CONSUMER and ACCESS keys!")
+            sys.exit(1)
 
 
     # get all the user info
@@ -117,13 +137,19 @@ class Twitter:
         # define the number of tweets that should be fetched
         number_of_tweets = max_tweets
         App.writeLog("INFO", "Trying to gather " +str(max_tweets)+ " tweets..")
-        App.printOut("⭕   trying to gather " +str(max_tweets)+ " tweets..")
+        App.printOut("⭕  trying to gather " +str(max_tweets)+ " tweets..")
         # here is where all tweets get fetched
-        tweets  = self.user_timeline(screen_name=username, count=max_tweets)
-        App.writeLog("INFO", "Successfully gathered all Tweets!")
-        App.printOut("✔   success! we got all the tweets!")
-        # return the array to the app
-        return tweets
+        try:
+            tweets  = self.user_timeline(screen_name=username, count=max_tweets)
+            App.writeLog("INFO", "Successfully gathered all Tweets!")
+            App.printOut("✔   success! we got all the tweets!")
+            # return the array to the app
+            return tweets
+        except Exception as ex:
+            # this (mostly) occurs because of an expired or invalid token.
+            App.writeLog("CRITICAL", "Cannot retrieve tweets, probably are your tokens expired or invalid.")
+            App.printOut("\nerror message:\n❌  unable to retrieve tweets, plese check if your tokens are right and not expired.")
+            sys.exit(1)
 
 
 class Config:
@@ -131,7 +157,6 @@ class Config:
     def get_config(self, parent, child):
         # set the configparser
         config = configparser.ConfigParser()
-
         # start and try to read the configfile
         try:
             config.read(self)
@@ -202,9 +227,6 @@ class App:
             else:
                 # if nothing fits, it's a debgu. period.
                 logger.debug(self)
-        else:
-            # nothing happens..
-            pass
 
 
     def printOut(self):
@@ -216,8 +238,10 @@ class App:
     def checkFile(self):
         # check if the requested file exists
         if os.path.exists(self):
+            App.writeLog("DEBUG", "[checkFile] - file: " +str(self)+ " exists!")
             return True
         else:
+            App.writeLog("ERROR", "[checkFile] - file: " +str(self)+ " doesn't exist!")
             return False
 
 
@@ -226,6 +250,7 @@ class App:
         if (os_system == "Windows"):
             fixed_path = path + "\\" + file
         else:
+            # linux and macos support
             fixed_path = path + "/" + file
         return fixed_path
 
@@ -253,12 +278,36 @@ class App:
             App.writeLog("INFO", "Folder ("+ self +") already exists.")
             return True
 
+    
+    def banner():
+        # create the banner and gather information
+        bnr = "       .-' \n"
+        bnr +="  '--./ /     _.---.  \n"
+        bnr +="  '-,  (__..-`       \      twitter-archiver 🐋\n"
+        bnr +="     \          .     |     version: "+str(VERSION)+" ~"+str(BUILD_STATE)+" "+str(BUILD_ICON)+" \n"
+        bnr +="      `,.__.   ,__.--/      made with ❤️  by mikeunge \n"
+        bnr +="        '._/_.'___.-`  \n"
+        App.printOut(bnr)
+
 
     def app():
         # set (global-) config path
         configpath = App.fixPath(os.path.dirname(os.path.abspath(__file__))+"/config", "twitter.conf")
         # get the operating system
         system = platform.system()
+
+        # check if the messages should be printed
+        global print_data
+        print_data = Config.get_config(configpath, "DEFAULT", "print_data")
+        # convert the input..
+        if (print_data == "True"):
+            print_data = True
+        else:
+            print_data = False
+
+        # twitter-archivers banner
+        App.banner()
+
         # check if the logger is enabled..
         logging_enabled = Config.get_config(configpath, "DEFAULT", "logging")
         if (logging_enabled == "True"):
@@ -298,16 +347,7 @@ class App:
         else:
             verfiy_data = False
             App.printOut("❌   Data verification is disabled!")
-        App.writeLog("DEBUG", "Verify Data: " +str(verfiy_data))
-
-        # check if the messages should be printed
-        print_data = Config.get_config(configpath, "DEFAULT", "print_data")
-        # convert the input..
-        if (print_data == "True"):
-            print_data = True
-        else:
-            print_data = False
-        App.writeLog("DEBUG", "Data output: " + str(print_data))
+        App.writeLog("DEBUG", "Verify Data: " +str(verfiy_data))        
 
         # get and define the API keys
         CONSUMER_KEY = Config.get_config(configpath, "TWITTER", "CONSUMER_KEY")
@@ -330,7 +370,7 @@ class App:
         # if something happened, write the error and exit
         if create_db != True:
             App.printOut(create_db)
-            App.writeLog(create_db, "error")
+            App.writeLog("ERROR", create_db)
             sys.exit(1)
 
         database_path = App.fixPath(database_path, database)
