@@ -1,4 +1,4 @@
-# Twitter Archiver
+# Twitter Archiver 🐋
 Archive twitter posts for analytical purpos and further usage.
 
 ## Functionality:
@@ -31,10 +31,16 @@ To get your twitter API keys, go to [dev.twitter.com](https://developer.twitter.
 - [✔️] ~~change paths from dynamic to static~~
     - ~~database path (data/database.db)~~
     - ~~log path (var/log/twitter_bot.log)~~
-- [❌] log folder & file checks
-- [❌] add banner / logo
+- [✔️] ~~log folder & file checks~~
+- [✔️] ~~add banner / logo~~
 - [❌] better texts (log & output)
+- [❌] outsource the credentials
+- [❌] handle multiple configuration files
 - [❌] filter (@) replys and store them into another table
+- [❌] add an update function and routine
+- [✔️] ~~handle twitter_auth exception~~
+- [❌] add new table 'added_to_db' with a timestamp to db
+- [❌] change the version/build in config if not the same version
 - [❌] create [Documentations](https://github.com/mikeunge/twitter-archiver/tree/master/docs) for setting up and maintaining crontab
 
 ## Contribute
