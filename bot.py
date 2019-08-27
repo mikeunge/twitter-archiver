@@ -9,7 +9,11 @@ import logging
 import configparser as configparser
 
 # create global vars..
-logger, logging_enabled, logging_path, configpath, os_system, version, build, print_data = "", "", "", "", "", "", "", True
+logger, logging_enabled, logging_path, configpath, os_system, print_data = "", "", "", "", "", True
+
+# define the version and build
+VERSION = "0.4"
+BUILD = "0.4.9"
 
 class Database:
     def create(file, path):
@@ -251,9 +255,6 @@ class App:
 
 
     def app():
-        # define the verison and build
-        version = "0.4"
-        build = "0.4.9"
         # set (global-) config path
         configpath = App.fixPath(os.path.dirname(os.path.abspath(__file__))+"/config", "twitter.conf")
         # get the operating system

@@ -32,6 +32,8 @@ To get your twitter API keys, go to [dev.twitter.com](https://developer.twitter.
     - ~~database path (data/database.db)~~
     - ~~log path (var/log/twitter_bot.log)~~
 - [❌] log folder & file checks
+- [❌] add banner / logo
+- [❌] better texts (log & output)
 - [❌] filter (@) replys and store them into another table
 - [❌] create [Documentations](https://github.com/mikeunge/twitter-archiver/tree/master/docs) for setting up and maintaining crontab
 
