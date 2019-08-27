@@ -1,7 +1,7 @@
 # Twitter Archiver 🐋
 Archive twitter posts for analytical purpos and further usage.
 
-## Functionality:
+## Functionality
 - SQLite database
 - Completely customizable
 - Cross-plattform (linux & windows tested)
