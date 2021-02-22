@@ -1,6 +1,10 @@
 # Twitter Archiver
 Archive twitter posts for analytical purpos and further usage.
 
+# ATTENTION !!!
+The script does not work anylongyer!
+Since Twitter changed their api it cannot connect/fetch anything.
+
 ## Functionality:
 - SQLite database
 - Completely customizable
